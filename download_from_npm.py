@@ -14,6 +14,8 @@ parser.add_argument('--dev', action="store_true",
                     help='Include Dev dependencies')
 parser.add_argument('--upload', action="store_true",
                     help='Upload to Nexus OSS')
+parser.add_argument('--no_ssl', action="store_true",
+                    help='Download From http')
 
 args = parser.parse_args()
 
@@ -32,13 +34,18 @@ with open('config.json', 'r') as config_file:
 
 
 def check_version(request_version, test_version):
+    request_version = request_version.split('-')[0]
+    test_version = test_version.split('-')[0]
     middle_free = False
     miner_free = False
     if '>' in request_version or '*' in request_version:
         return True
     if '^' in request_version:
-        middle_free = True
         request_version = request_version.replace('^', '')
+        if request_version.split('.')[0] == '0':
+            miner_free = True
+        else:
+            middle_free = True
     if '~' in request_version:
         miner_free = True
         request_version = request_version.replace('~', '')
@@ -52,26 +59,47 @@ def check_version(request_version, test_version):
                     miner_free = True
                 break
 
+        request_version = request_version.replace('x', '0')
+
     splited_request_version = request_version.split('.')
     splited_test_version = test_version.split('.')
 
-    if len(splited_request_version) != 3 or len(splited_test_version) != 3:
+    if len(splited_request_version) == 1:
+        middle_free = True
+        splited_request_version.append('0')
+        splited_request_version.append('0')
+    elif len(splited_request_version) == 2:
+        miner_free = True
+        splited_request_version.append('0')
+    else:
         return True
 
-    if middle_free:
-        if splited_request_version[0] == splited_test_version[0]:
-            return True
-    elif miner_free:
-        if splited_request_version[0] == splited_test_version[0] and splited_request_version[1] == splited_test_version[1]:
-            return True
-    else:
-        if splited_request_version[0] == splited_test_version[0] and splited_request_version[1] == splited_test_version[1] and splited_request_version[2] == splited_test_version[2]:
-            return True
+    request_1 = splited_request_version[0]
+    request_2 = splited_request_version[1]
+    request_3 = splited_request_version[2]
+    test_1 = splited_test_version[0]
+    test_2 = splited_test_version[1]
+    test_3 = splited_test_version[2]
+    if request_1 == test_1:
+        if middle_free:
+            if int(request_2) <= int(test_2):
+                return True
+        elif request_2 == test_2:
+            if miner_free:
+                if int(request_3) <= int(test_3):
+                    return True
+            else:
+                if request_3 == test_3:
+                    return True
+
+    return False
 
 
 def get_package(package_name, package_version):
-    response = requests.get(
-        'http://registry.npmjs.org/{}'.format(package_name))
+    package_url = 'https://registry.npmjs.org/{}'.format(package_name)
+    if args.no_ssl:
+        package_url = package_url.replace('https', 'http')
+    response = requests.get(package_url)
     if response.status_code == 200:
         parsed = json.loads(response.content)
         if 'versions' not in parsed:
@@ -94,7 +122,7 @@ def get_package(package_name, package_version):
         package = '{}@{}'.format(package_name, download_version)
         if package in packages:
             return
-        print(package)
+        # print(package)
 
         packages.add(package)
 
@@ -108,6 +136,9 @@ def get_package(package_name, package_version):
         if tarball is None:
             print('{} tarball not found'.format(package))
             return
+
+        if args.no_ssl:
+            tarball = tarball.replace('https', 'http')
 
         npm_file_name = tarball.split('/')[-1]
         already_files = os.listdir('tarballs')
