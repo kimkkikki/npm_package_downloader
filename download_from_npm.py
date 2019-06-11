@@ -5,7 +5,8 @@ import shutil
 import os
 
 
-parser = argparse.ArgumentParser(description='Download NPM Pakages to disk')
+parser = argparse.ArgumentParser(
+    description='Download NPM Pakages to disk and upload Nexus OSS')
 parser.add_argument('package', metavar='PackageName',
                     type=str, help='NPM Package name')
 parser.add_argument('version', metavar='Version',
@@ -25,12 +26,14 @@ input_version = args.version
 packages = set()
 notFound = set()
 
-if not os.path.exists('tarballs'):
-    os.mkdir('tarballs')
-
 
 with open('config.json', 'r') as config_file:
     config = json.loads(config_file.read())
+
+npm_download_folder = config['npm-download-folder']
+
+if not os.path.exists(npm_download_folder):
+    os.mkdir(npm_download_folder)
 
 
 def check_version(request_version, test_version):
@@ -139,14 +142,14 @@ def get_package(package_name, package_version):
             tarball = tarball.replace('https', 'http')
 
         npm_file_name = tarball.split('/')[-1]
-        already_files = os.listdir('tarballs')
+        already_files = os.listdir(npm_download_folder)
         if npm_file_name in already_files:
             print('{} is already download skip'.format(npm_file_name))
             return
 
         r = requests.get(tarball, stream=True)
         if r.status_code == 200:
-            with open('tarballs/{}'.format(npm_file_name), 'wb') as f:
+            with open('{}/{}'.format(npm_download_folder, npm_file_name), 'wb') as f:
                 r.raw.decode_content = True
                 shutil.copyfileobj(r.raw, f)
                 print('{} download success'.format(npm_file_name))
@@ -154,7 +157,7 @@ def get_package(package_name, package_version):
         if args.upload:
             upload_result = requests.post('{}/service/rest/v1/components?repository={}'.format(config['nexus-host'], config['nexus-npm-repository']),
                                           auth=requests.auth.HTTPBasicAuth(config['nexus-username'], config['nexus-password']), files={
-                'upload_file': open('tarballs/{}'.format(npm_file_name), 'rb')
+                'upload_file': open('{}/{}'.format(npm_download_folder, npm_file_name), 'rb')
             })
 
             if upload_result.status_code == 204:

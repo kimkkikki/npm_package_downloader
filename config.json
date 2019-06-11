@@ -2,5 +2,8 @@
     "nexus-host": "http://localhost:8081",
     "nexus-username": "admin",
     "nexus-password": "admin123",
-    "nexus-npm-repository": "npm_private"
+    "nexus-npm-repository": "npm_private",
+    "npm-download-folder": "npm_tarballs",
+    "nexus-pypi-repository": "pypi_private",
+    "pypi-download-folder": "pypi_tarballs"
 }

@@ -9,6 +9,7 @@ autopep8 = "*"
 
 [packages]
 requests = "*"
+packaging = "*"
 
 [requires]
 python_version = "3.7"
