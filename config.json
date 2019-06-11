@@ -1,0 +1,6 @@
+{
+    "nexus-host": "http://localhost:8081",
+    "nexus-username": "admin",
+    "nexus-password": "admin123",
+    "nexus-npm-repository": "npm_private"
+}
