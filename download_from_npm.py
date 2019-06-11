@@ -71,8 +71,6 @@ def check_version(request_version, test_version):
     elif len(splited_request_version) == 2:
         miner_free = True
         splited_request_version.append('0')
-    else:
-        return True
 
     request_1 = splited_request_version[0]
     request_2 = splited_request_version[1]
