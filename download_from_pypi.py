@@ -19,6 +19,10 @@ parser.add_argument('--no_ssl', action="store_true",
 
 args = parser.parse_args()
 
+verify = True
+if args.no_ssl:
+    verify = False
+
 
 with open('config.json', 'r') as config_file:
     config = json.loads(config_file.read())
@@ -39,9 +43,8 @@ def check_version(request, test):
 
 
 def get_package(package_name, package_version):
-    package_url = 'https://pypi.org/pypi/{}/json'.format(package_name)
-    if args.no_ssl:
-        package_url = package_url.replace('https', 'http')
+    package_url = 'https://pypi.org/pypi/{}/json'.format(
+        package_name, verify=verify)
     response = requests.get(package_url)
     if response.status_code == 200:
         parsed = json.loads(response.content)
@@ -77,7 +80,7 @@ def get_package(package_name, package_version):
                 print('{} is already download skip'.format(pypi_file_name))
                 continue
 
-            r = requests.get(download_file, stream=True)
+            r = requests.get(download_file, stream=True, verify=verify)
             if r.status_code == 200:
                 with open('{}/{}'.format(pypi_download_folder, pypi_file_name), 'wb') as f:
                     r.raw.decode_content = True
