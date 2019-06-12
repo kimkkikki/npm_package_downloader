@@ -55,8 +55,10 @@ def get_package(package_name, package_version):
         for _version, value in versions.items():
             check_result = check_version(package_version, _version)
             if check_result:
-                download_files = [release_obj['url'] for release_obj in value]
-                download_version = _version
+                if download_version is None or version.parse(download_version) < version.parse(_version):
+                    download_files = [release_obj['url']
+                                      for release_obj in value]
+                    download_version = _version
 
         dependencies = parsed['info']['requires_dist']
         if dependencies is not None:
