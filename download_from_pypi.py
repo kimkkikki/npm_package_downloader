@@ -63,12 +63,17 @@ def get_package(package_name, package_version):
             for version_string in dependencies:
                 if ";" in version_string:
                     continue
-                dep_package_name = version_string.split(' ')[0]
-                dep_version = version_string.split(' ')[1].replace(
-                    '>', '').replace('<', '').replace('=', '')
 
-                if dep_version == '':
+                splited_version = version_string.split(' ')
+                dep_package_name = splited_version[0]
+                if len(splited_version) == 1:
                     dep_version = '*'
+                else:
+                    dep_version = splited_version[1].replace(
+                        '>', '').replace('<', '').replace('=', '')
+
+                    if dep_version == '':
+                        dep_version = '*'
                 get_package(dep_package_name, dep_version)
 
         for download_file in download_files:
