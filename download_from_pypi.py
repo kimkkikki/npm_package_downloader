@@ -5,7 +5,6 @@ import shutil
 from packaging import version
 import requests
 
-
 parser = argparse.ArgumentParser(
     description='Download PYPI Pakages to disk and upload Nexus OSS')
 parser.add_argument('package', metavar='PackageName',
@@ -23,6 +22,8 @@ verify = True
 if args.no_ssl:
     verify = False
 
+    import urllib3
+    urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
 with open('config.json', 'r') as config_file:
     config = json.loads(config_file.read())
@@ -44,8 +45,8 @@ def check_version(request, test):
 
 def get_package(package_name, package_version):
     package_url = 'https://pypi.org/pypi/{}/json'.format(
-        package_name, verify=verify)
-    response = requests.get(package_url)
+        package_name)
+    response = requests.get(package_url, verify=verify)
     if response.status_code == 200:
         parsed = json.loads(response.content)
         versions = parsed['releases']
@@ -71,9 +72,6 @@ def get_package(package_name, package_version):
                 get_package(dep_package_name, dep_version)
 
         for download_file in download_files:
-            if args.no_ssl:
-                download_file = download_file.replace('https', 'http')
-
             pypi_file_name = download_file.split('/')[-1]
             already_files = os.listdir(pypi_download_folder)
             if pypi_file_name in already_files:
