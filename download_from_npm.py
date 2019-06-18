@@ -97,9 +97,10 @@ def check_version(request_version, test_version):
 
 
 def get_package(package_name, package_version):
-    package_url = 'https://registry.npmjs.org/{}'.format(package_name)
+    base_url = 'https://registry.npmjs.org'
     if args.no_ssl:
-        package_url = package_url.replace('https', 'http')
+        base_url = base_url.replace('https', 'http')
+    package_url = '{}/{}'.format(base_url, package_name)
     response = requests.get(package_url)
     if response.status_code == 200:
         parsed = json.loads(response.content)
@@ -139,7 +140,7 @@ def get_package(package_name, package_version):
             return
 
         if args.no_ssl:
-            tarball = tarball.replace('https', 'http')
+            tarball = tarball.replace('https', 'http', 1)
 
         npm_file_name = tarball.split('/')[-1]
         already_files = os.listdir(npm_download_folder)
