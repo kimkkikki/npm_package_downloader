@@ -1,5 +1,6 @@
 .vscode/
 tarballs/
 node_modules/
-pypi_tarballs/
-npm_tarballs/
+*tarballs/
+jars/
+venv/

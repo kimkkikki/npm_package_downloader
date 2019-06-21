@@ -5,5 +5,7 @@
     "nexus-npm-repository": "npm_private",
     "npm-download-folder": "npm_tarballs",
     "nexus-pypi-repository": "pypi_private",
-    "pypi-download-folder": "pypi_tarballs"
+    "pypi-download-folder": "pypi_tarballs",
+    "nexus-maven-repository": "maven_private",
+    "maven-download-folder": "jars"
 }
