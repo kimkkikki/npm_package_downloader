@@ -65,23 +65,25 @@ def get_package(group_id: str, artifact_id: str, req_version: str):
                 shutil.copyfileobj(r.raw, f)
                 print('{} download success'.format(jar_file_name))
 
-        if args.upload:
-            upload_result = requests.post('{}/service/rest/v1/components?repository={}'.format(config['nexus-host'], config['nexus-maven-repository']),
-                                          auth=requests.auth.HTTPBasicAuth(config['nexus-username'], config['nexus-password']), data={
-                'groupId': group_id,
-                'artifactId': artifact_id,
-                'version': req_version,
-                'maven2.asset1.extension': 'jar',
+            if args.upload:
+                upload_result = requests.post('{}/service/rest/v1/components?repository={}'.format(config['nexus-host'], config['nexus-maven-repository']),
+                                              auth=requests.auth.HTTPBasicAuth(config['nexus-username'], config['nexus-password']), data={
+                    'groupId': group_id,
+                    'artifactId': artifact_id,
+                    'version': req_version,
+                    'maven2.asset1.extension': 'jar',
 
-            }, files={
-                'maven2.asset1': open('{}/{}'.format(maven_download_folder, jar_file_name), 'rb'),
-            })
+                }, files={
+                    'maven2.asset1': open('{}/{}'.format(maven_download_folder, jar_file_name), 'rb'),
+                })
 
-            if upload_result.status_code == 204:
-                print('{} nexus upload success'.format(jar_file_name))
-            else:
-                print('{} nexus upload failure'.format(jar_file_name))
-                print(upload_result.content)
+                if upload_result.status_code == 204:
+                    print('{} nexus upload success'.format(jar_file_name))
+                else:
+                    print('{} nexus upload failure'.format(jar_file_name))
+                    print(upload_result.content)
+        else:
+            print('{} file download failed, reason : {}'.format(jar_file_name, r))
 
 
 get_package(args.groupId, args.artifactId, args.version)
