@@ -36,6 +36,13 @@ if not os.path.exists(maven_download_folder):
 def get_package(group_id: str, artifact_id: str, req_version: str):
     package_url = '{0}{1}/{2}/{3}/{2}-{3}'.format(base_url,
                                                   group_id.replace('.', '/'), artifact_id, req_version)
+
+    jar_file_name = '{}.jar'.format(package_url.split('/')[-1])
+    already_files = os.listdir(maven_download_folder)
+    if jar_file_name in already_files:
+        print('{} is already download skip'.format(jar_file_name))
+        return
+
     response = requests.get('{}.pom'.format(package_url))
     if response.status_code == 200:
         namespaces = {'xmlns': 'http://maven.apache.org/POM/4.0.0'}
@@ -51,12 +58,6 @@ def get_package(group_id: str, artifact_id: str, req_version: str):
                 "xmlns:groupId", namespaces=namespaces)
             if _artifactId is not None and _version is not None and _groupId is not None:
                 get_package(_groupId.text, _artifactId.text, _version.text)
-
-        jar_file_name = '{}.jar'.format(package_url.split('/')[-1])
-        already_files = os.listdir(maven_download_folder)
-        if jar_file_name in already_files:
-            print('{} is already download skip'.format(jar_file_name))
-            return
 
         r = requests.get('{}.jar'.format(package_url), stream=True)
         if r.status_code == 200:
