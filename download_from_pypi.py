@@ -37,7 +37,7 @@ if not os.path.exists(pypi_download_folder):
 def check_version(request, test):
     if request == '*':
         return True
-    if version.parse(request) <= version.parse(test):
+    if version.parse(request) == version.parse(test):
         return True
 
     return False
@@ -56,8 +56,7 @@ def get_package(package_name, package_version):
             check_result = check_version(package_version, _version)
             if check_result:
                 if download_version is None or version.parse(download_version) < version.parse(_version):
-                    download_files = [release_obj['url']
-                                      for release_obj in value]
+                    download_files = [release_obj['url'] for release_obj in value]
                     download_version = _version
 
         dependencies = parsed['info']['requires_dist']
@@ -71,8 +70,7 @@ def get_package(package_name, package_version):
                 if len(splited_version) == 1:
                     dep_version = '*'
                 else:
-                    dep_version = splited_version[1].replace(
-                        '>', '').replace('<', '').replace('=', '')
+                    dep_version = splited_version[1].replace('>', '').replace('<', '').replace('=', '').replace('(', '').replace(')', '')
 
                     if dep_version == '':
                         dep_version = '*'
