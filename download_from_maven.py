@@ -33,58 +33,59 @@ if not os.path.exists(maven_download_folder):
     os.mkdir(maven_download_folder)
 
 
-def get_package(group_id: str, artifact_id: str, req_version: str):
-    package_url = '{0}{1}/{2}/{3}/{2}-{3}'.format(base_url,
-                                                  group_id.replace('.', '/'), artifact_id, req_version)
+circular_ref = set()
 
-    jar_file_name = '{}.jar'.format(package_url.split('/')[-1])
+
+def get_package(group_id: str, artifact_id: str, req_version: str):
+    package_url = f"{base_url}{group_id.replace('.', '/')}/{artifact_id}/{req_version}/{artifact_id}-{req_version}"
+
+    jar_file_name = f"{package_url.split('/')[-1]}.jar"
     already_files = os.listdir(maven_download_folder)
     if jar_file_name in already_files:
-        print('{} is already download skip'.format(jar_file_name))
+        print(f'{jar_file_name} is already download skip')
         return
 
-    response = requests.get('{}.pom'.format(package_url))
+    response = requests.get(f'{package_url}.pom')
     if response.status_code == 200:
         namespaces = {'xmlns': 'http://maven.apache.org/POM/4.0.0'}
 
         et = ElementTree.fromstring(
             response.content.decode().replace('\r', '').replace('\n', ''))
         for dependency in et.findall('.//xmlns:dependency', namespaces):
-            _artifactId = dependency.find(
-                "xmlns:artifactId", namespaces=namespaces)
-            _version = dependency.find(
-                "xmlns:version", namespaces=namespaces)
-            _groupId = dependency.find(
-                "xmlns:groupId", namespaces=namespaces)
+            _artifactId = dependency.find("xmlns:artifactId", namespaces=namespaces)
+            _version = dependency.find("xmlns:version", namespaces=namespaces)
+            _groupId = dependency.find("xmlns:groupId", namespaces=namespaces)
             if _artifactId is not None and _version is not None and _groupId is not None:
-                get_package(_groupId.text, _artifactId.text, _version.text)
+                if (_groupId.text, _artifactId.text, _version.text) not in circular_ref:
+                    circular_ref.add((_groupId.text, _artifactId.text, _version.text))
+                    get_package(_groupId.text, _artifactId.text, _version.text)
 
-        r = requests.get('{}.jar'.format(package_url), stream=True)
+        r = requests.get(f'{package_url}.jar', stream=True)
         if r.status_code == 200:
-            with open('{}/{}'.format(maven_download_folder, jar_file_name), 'wb') as f:
+            with open(f'{maven_download_folder}/{jar_file_name}', 'wb') as f:
                 r.raw.decode_content = True
                 shutil.copyfileobj(r.raw, f)
-                print('{} download success'.format(jar_file_name))
+                print(f'{jar_file_name} download success')
 
             if args.upload:
-                upload_result = requests.post('{}/service/rest/v1/components?repository={}'.format(config['nexus-host'], config['nexus-maven-repository']),
+                upload_result = requests.post(f"{config['nexus-host']}/service/rest/v1/components?repository={config['nexus-maven-repository']}",
                                               auth=requests.auth.HTTPBasicAuth(config['nexus-username'], config['nexus-password']), data={
-                    'groupId': group_id,
-                    'artifactId': artifact_id,
-                    'version': req_version,
-                    'maven2.asset1.extension': 'jar',
+                                                  'groupId': group_id,
+                                                  'artifactId': artifact_id,
+                                                  'version': req_version,
+                                                  'maven2.asset1.extension': 'jar',
 
-                }, files={
-                    'maven2.asset1': open('{}/{}'.format(maven_download_folder, jar_file_name), 'rb'),
-                })
+                                              }, files={
+                                                  'maven2.asset1': open(f'{maven_download_folder}/{jar_file_name}', 'rb'),
+                                              })
 
                 if upload_result.status_code == 204:
-                    print('{} nexus upload success'.format(jar_file_name))
+                    print(f'{jar_file_name} nexus upload success')
                 else:
-                    print('{} nexus upload failure'.format(jar_file_name))
+                    print(f'{jar_file_name} nexus upload failure')
                     print(upload_result.content)
         else:
-            print('{} file download failed, reason : {}'.format(jar_file_name, r))
+            print(f'{jar_file_name} file download failed, reason : {r}')
 
 
 get_package(args.groupId, args.artifactId, args.version)
