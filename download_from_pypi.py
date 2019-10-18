@@ -44,8 +44,7 @@ def check_version(request, test):
 
 
 def get_package(package_name, package_version):
-    package_url = 'https://pypi.org/pypi/{}/json'.format(
-        package_name)
+    package_url = f'https://pypi.org/pypi/{package_name}/json'
     response = requests.get(package_url, verify=verify)
     if response.status_code == 200:
         parsed = json.loads(response.content)
@@ -80,26 +79,26 @@ def get_package(package_name, package_version):
             pypi_file_name = download_file.split('/')[-1]
             already_files = os.listdir(pypi_download_folder)
             if pypi_file_name in already_files:
-                print('{} is already download skip'.format(pypi_file_name))
+                print(f'{pypi_file_name} is already download skip')
                 continue
 
             r = requests.get(download_file, stream=True, verify=verify)
             if r.status_code == 200:
-                with open('{}/{}'.format(pypi_download_folder, pypi_file_name), 'wb') as f:
+                with open(f'{pypi_download_folder}/{pypi_file_name}', 'wb') as f:
                     r.raw.decode_content = True
                     shutil.copyfileobj(r.raw, f)
-                    print('{} download success'.format(pypi_file_name))
+                    print(f'{pypi_file_name} download success')
 
             if args.upload:
-                upload_result = requests.post('{}/service/rest/v1/components?repository={}'.format(config['nexus-host'], config['nexus-pypi-repository']),
+                upload_result = requests.post(f"{config['nexus-host']}/service/rest/v1/components?repository={config['nexus-pypi-repository']}",
                                               auth=requests.auth.HTTPBasicAuth(config['nexus-username'], config['nexus-password']), files={
-                    'upload_file': open('{}/{}'.format(pypi_download_folder, pypi_file_name), 'rb')
-                })
+                                                  'upload_file': open(f'{pypi_download_folder}/{pypi_file_name}', 'rb')
+                                              })
 
                 if upload_result.status_code == 204:
-                    print('{} nexus upload success'.format(pypi_file_name))
+                    print(f'{pypi_file_name} nexus upload success')
                 else:
-                    print('{} nexus upload failure'.format(pypi_file_name))
+                    print(f'{pypi_file_name} nexus upload failure')
 
 
 get_package(args.package, args.version)

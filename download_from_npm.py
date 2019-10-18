@@ -100,7 +100,7 @@ def get_package(package_name, package_version):
     base_url = 'https://registry.npmjs.org'
     if args.no_ssl:
         base_url = base_url.replace('https', 'http')
-    package_url = '{}/{}'.format(base_url, package_name)
+    package_url = f'{base_url}/{package_name}'
     response = requests.get(package_url)
     if response.status_code == 200:
         parsed = json.loads(response.content)
@@ -121,7 +121,7 @@ def get_package(package_name, package_version):
                 if 'devDependencies' in value:
                     devDependencies = value['devDependencies']
 
-        package = '{}@{}'.format(package_name, download_version)
+        package = f'{package_name}@{download_version}'
         if package in packages:
             return
         # print(package)
@@ -136,7 +136,7 @@ def get_package(package_name, package_version):
                 get_package(dep_package, dep_version)
 
         if tarball is None:
-            print('{} tarball not found'.format(package))
+            print(f'{package} tarball not found')
             return
 
         if args.no_ssl:
@@ -145,30 +145,30 @@ def get_package(package_name, package_version):
         npm_file_name = tarball.split('/')[-1]
         already_files = os.listdir(npm_download_folder)
         if npm_file_name in already_files:
-            print('{} is already download skip'.format(npm_file_name))
+            print(f'{npm_file_name} is already download skip')
             return
 
         r = requests.get(tarball, stream=True)
         if r.status_code == 200:
-            with open('{}/{}'.format(npm_download_folder, npm_file_name), 'wb') as f:
+            with open(f'{npm_download_folder}/{npm_file_name}', 'wb') as f:
                 r.raw.decode_content = True
                 shutil.copyfileobj(r.raw, f)
-                print('{} download success'.format(npm_file_name))
+                print(f'{npm_file_name} download success')
 
         if args.upload:
-            upload_result = requests.post('{}/service/rest/v1/components?repository={}'.format(config['nexus-host'], config['nexus-npm-repository']),
+            upload_result = requests.post(f"{config['nexus-host']}/service/rest/v1/components?repository={config['nexus-npm-repository']}",
                                           auth=requests.auth.HTTPBasicAuth(config['nexus-username'], config['nexus-password']), files={
-                'upload_file': open('{}/{}'.format(npm_download_folder, npm_file_name), 'rb')
-            })
+                                              'upload_file': open(f'{npm_download_folder}/{npm_file_name}', 'rb')
+                                          })
 
             if upload_result.status_code == 204:
-                print('{} nexus upload success'.format(npm_file_name))
+                print(f'{npm_file_name} nexus upload success')
             else:
-                print('{} nexus upload failure'.format(npm_file_name))
+                print(f'{npm_file_name} nexus upload failure')
     else:
         notFound.add(package_name + package_version)
 
 
 get_package(input_package, input_version)
 if len(notFound) > 0:
-    print('{} packages not found'.format(notFound))
+    print(f'{notFound} packages not found')
