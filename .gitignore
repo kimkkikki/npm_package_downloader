@@ -3,4 +3,5 @@ tarballs/
 node_modules/
 *tarballs/
 jars/
+rpms/
 venv/

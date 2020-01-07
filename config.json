@@ -7,5 +7,7 @@
     "nexus-pypi-repository": "pypi_private",
     "pypi-download-folder": "pypi_tarballs",
     "nexus-maven-repository": "maven_private",
-    "maven-download-folder": "jars"
+    "maven-download-folder": "jars",
+    "nexus-yum-repository": "yum_private",
+    "yum-download-folder": "rpms"
 }
