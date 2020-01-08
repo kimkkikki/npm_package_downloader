@@ -39,7 +39,6 @@ def download(package_url):
     already_files = os.listdir(download_folder)
     if file_name in already_files:
         print(f'{file_name} is already download skip')
-        return -1
 
     r = requests.get(package_url, stream=True, verify=verify)
     if r.status_code == 200:
@@ -62,10 +61,8 @@ def download(package_url):
             else:
                 print(f'{file_name} nexus upload failure')
                 print(upload_result.content)
-        return 0
     else:
         print(f'{file_name} file download failed, reason : {r}')
-        return -1
 
 
 def get_package(url: str):
@@ -122,6 +119,8 @@ def select_package(package_name):
                         get_package(links[int(i)])
 
         elif len(links) == 1:
+            if selected_repo is None:
+                selected_repo = links[0].split('/')[-2]
             get_package(links[0])
         else:
             print(f'{package_name}는 찾을 수 없습니다.')
